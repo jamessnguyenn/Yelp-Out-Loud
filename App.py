@@ -68,7 +68,7 @@ class App:
         print('{:50}{:}'.format('4 - Close a business', '12 - View the average number of complements recieved by a user'))
         print('{:50}{:}'.format('5 - View Reviews of a business', '13 - View the number of elite users in a specific year'))
         print('{:50}{:}'.format('6 - Send a Tip about a business', '14 - View the total number of reviews posted by a user'))
-        print('{:50}{:}'.format('7 - View the Business Leaderboards', '15 - View the list of users who joined yelp in a certain year'))
+        print('{:50}{:}'.format('7 - View the Business Leaderboards', '15 - View the list of 10 users who joined yelp in a certain year'))
         print('{:50}{:}'.format('8 - Discover a business based on other criterias', '0 - Exit'))
 
     def __checkInBusiness(self):
@@ -89,28 +89,32 @@ class App:
         #todo perform INSERT
         date = datetime.datetime.now()
         date = date.replace(microsecond=0)
-        result = self.__tips.insert_one({"text": tip, "date": date, "compliment_count": 0, "user_id": userID, "businessID": businessID})
-        print("\033[0;34mThanks for helping the community. Your tip id is" + str(result['inserted_id']) + "Press Enter to return to the menu.\033[0m")
+        result = self.__tips.insert_one({"text": tip, "date": date, "compliment_count": 0, "user_id": userID, "business_id": businessID})
+        print("\033[0;34mThanks for helping the community. Your tip id is" + str(result.inserted_id) + ". Press Enter to return to the menu.\033[0m")
         input()
 
     def __deleteReview(self):
+        businessID = input('\033[0;34mEnter the id of the business you would like to delete the review from:\n\033[0m')
         reviewID = input("\033[0;34mEnter the id of the review you would like to delete:\n\033[0m")
         #todo perform DELETION
-        result = self.__reviews.delete_one({"review_id": reviewID})
-        if(result['deleted_count'] >0):
+        result = self.__reviews.delete_one({"review_id": reviewID, "business_id": businessID})
+        if(result.deleted_count >0):
             print("\033[0;34mReview has been deleted. Feel free to make another one! Press Enter to return to the menu.\033[0m")
         else:
             print("No Reviews found to delete. Press Enter to return to the menu and Try Again.")
         input()
 
+
     def __getUserJoinedByYear(self):
         try:
             year = int(input("\033[0;34mEnter a year you would like to find the user who have joined then:\n\033[0m"))
             #todo perform FIND
-            cursor = self.__users.find({"$expr": {"$eq": [{"$year": "$yelping_since"}, year]}})
+            cursor = self.__users.find({ "yelping_since": {"$type": "date"},"$expr": {"$eq": [{"$year": "$yelping_since"}, year]}}).limit(10)
             print("Users who have joined in "+ str(year) +":")
+            count = 1
             for document in cursor:
-                print(str(document['user_id']) + " " + str('name'))
+                print(str(count)+ ". "+str(document['name'])+ " UserId:"+ str(document['user_id']))
+                count+=1
             print("\033[0;34mPress Enter to return to the menu.\033[0;34m")
             input()
         except ValueError:

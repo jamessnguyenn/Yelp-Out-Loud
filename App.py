@@ -1,9 +1,12 @@
+from MongoConnector import MongoConnector
+
 class App:
-    __terminated = False
 
     def __init__(self):
+        self.__mongoConnector = MongoConnector()
         print('\u001B[34m----------------------------------------------------------')
         print('Welcome to Yelp Out Loud!\u001B[0m')
+        self.__terminated = False
 
 
     def start(self):
@@ -47,6 +50,7 @@ class App:
                 print('Goodbye!')
             else:
                 print("\033[0;91mInvalid entry. Try Again\033[0m")
+
     def __displayMenu(self):
         print('{:50}{:}'.format('1 - Discover a business', '9 - View tips About a Business'))
         print('{:50}{:}'.format('2 - Review a business', '10 - Delete a review'))
@@ -56,10 +60,12 @@ class App:
         print('{:50}{:}'.format('6 - Send a Tip about a business', '14 - View the total number of reviews posted by a user'))
         print('{:50}{:}'.format('7 - View the Business Leaderboards', '15 - View the list of users who joined yelp in a certain year'))
         print('{:50}{:}'.format('8 - Discover a business based on other criterias', '0 - Exit'))
+
     def __checkInBusiness(self):
         businesID = input('\033[0;34mEnter the id of the business you would like to check into:\n\033[0m')
         #todo perform UPDATE
         print("\033[0;34mSuccessfully checked into the business! Press Enter to return to the menu.\033[0m")
+
     def __sendInTip(self):
         userID = input("\033[0;34mEnter your user id:\n\033[0m")
         businesID = input("\033[0;34mEnter the business id you would like to provide a tip to:\n\033[0m")
@@ -67,11 +73,13 @@ class App:
         #todo perform INSERT
         print("\033[0;34mThanks for submitting the tip and helping the community! Press Enter to return to the menu.\033[0m")
         input()
+
     def __deleteReview(self):
         reviewID = input("\033[0;34mEnter the id of the review you would like to delete:\n\033[0m")
         #todo perform DELETION
         print("\033[0;34mReview has been deleted. Feel free to make another one! Press Enter to return to the menu.\033[0m")
         input()
+
     def __getUserJoinedByYear(self):
         try:
             year = int(input("\033[0;34mEnter a year you would like to find the user who have joined then:\n\033[0m"))

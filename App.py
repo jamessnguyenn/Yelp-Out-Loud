@@ -1,9 +1,19 @@
-from MongoConnector import MongoConnector
+from pymongo import MongoClient
+from pymongo.errors import ConnectionFailure
+import datetime
 
 class App:
 
     def __init__(self):
-        self.__mongoConnector = MongoConnector()
+        self.__mongoConnector = MongoConnector('mongodb://ec2-54-85-131-49.compute-1.amazonaws.com:27021')
+
+        #Connect to each collection
+        self.__business = self.__mongoConnector.db.business
+        self.__checkin = self.__mongoConnector.db.checkin
+        self.__reviews = self.__mongoConnector.db.reviews
+        self.__tips = self.__mongoConnector.db.tips
+        self.__users = self.__mongoConnector.db.users
+
         print('\u001B[34m----------------------------------------------------------')
         print('Welcome to Yelp Out Loud!\u001B[0m')
         self.__terminated = False
@@ -62,29 +72,45 @@ class App:
         print('{:50}{:}'.format('8 - Discover a business based on other criterias', '0 - Exit'))
 
     def __checkInBusiness(self):
-        businesID = input('\033[0;34mEnter the id of the business you would like to check into:\n\033[0m')
+        businessID = input('\033[0;34mEnter the id of the business you would like to check into:\n\033[0m')
+        date = datetime.datetime.now()
+        date = date.replace(microsecond=0)
         #todo perform UPDATE
-        print("\033[0;34mSuccessfully checked into the business! Press Enter to return to the menu.\033[0m")
+        result = self.__checkin.update_one({'business_id': businessID}, {'$push':{"date": date}})
+        if(result['modified_count'] >0):
+            print("\033[0;34mSuccessfully checked into the business! Press Enter to return to the menu.\033[0m")
+        else:
+            print("No businesses found to check in. Press Enter to return to the menu and Try Again.")
 
     def __sendInTip(self):
         userID = input("\033[0;34mEnter your user id:\n\033[0m")
-        businesID = input("\033[0;34mEnter the business id you would like to provide a tip to:\n\033[0m")
+        businessID = input("\033[0;34mEnter the business id you would like to provide a tip to:\n\033[0m")
         tip = input("\033[0;34mPlease provide a tip in one line:\n\033[0m")
         #todo perform INSERT
-        print("\033[0;34mThanks for submitting the tip and helping the community! Press Enter to return to the menu.\033[0m")
+        date = datetime.datetime.now()
+        date = date.replace(microsecond=0)
+        result = self.__tips.insert_one({"text": tip, "date": date, "compliment_count": 0, "user_id": userID, "businessID": businessID})
+        print("\033[0;34mThanks for helping the community. Your tip id is" + str(result['inserted_id']) + "Press Enter to return to the menu.\033[0m")
         input()
 
     def __deleteReview(self):
         reviewID = input("\033[0;34mEnter the id of the review you would like to delete:\n\033[0m")
         #todo perform DELETION
-        print("\033[0;34mReview has been deleted. Feel free to make another one! Press Enter to return to the menu.\033[0m")
+        result = self.__reviews.delete_one({"review_id": reviewID})
+        if(result['deleted_count'] >0):
+            print("\033[0;34mReview has been deleted. Feel free to make another one! Press Enter to return to the menu.\033[0m")
+        else:
+            print("No Reviews found to delete. Press Enter to return to the menu and Try Again.")
         input()
 
     def __getUserJoinedByYear(self):
         try:
             year = int(input("\033[0;34mEnter a year you would like to find the user who have joined then:\n\033[0m"))
             #todo perform FIND
+            cursor = self.__users.find({"$expr": {"$eq": [{"$year": "$yelping_since"}, year]}})
             print("Users who have joined in "+ str(year) +":")
+            for document in cursor:
+                print(str(document['user_id']) + " " + str('name'))
             print("\033[0;34mPress Enter to return to the menu.\033[0;34m")
             input()
         except ValueError:
@@ -92,9 +118,16 @@ class App:
             input()
 
 
+class MongoConnector:
 
-
-
+    def __init__(self, connectionString):
+        client = MongoClient(connectionString)
+        try:
+            client.admin.command('ismaster')
+            print("Successfully Connected to MongoDB Client")
+            self.db = client.yelp
+        except ConnectionFailure:
+            print("Server not available")
 
 #Run App
 app = App()

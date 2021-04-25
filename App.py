@@ -76,7 +76,7 @@ class App:
         date = datetime.datetime.now()
         date = date.replace(microsecond=0)
         #todo perform UPDATE
-        result = self.__checkin.update_one({'business_id': businessID}, {'$push':{"date": date}})
+        result = self.__checkin.update_one({'business_id': businessID}, {'$push':{"date": str(date)}})
         if(result.modified_count >0):
             print("\033[0;34mSuccessfully checked into the business! Press Enter to return to the menu.\033[0m")
         else:

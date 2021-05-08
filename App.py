@@ -76,7 +76,7 @@ class App:
 
     #Use Case 1
     def __discoverBusiness(self):
-        state = input("\033[0;34mEnter the state abbreviation that you would like to find the business in:\n033[0m")
+        state = input("\033[0;34mEnter the state abbreviation that you would like to find the business in:\n\033[0m")
         city = input("\033[0;34mEnter the city that you would like the find the business in:\n\033[0m")
         category = input("\033[0;34mEnter the category of the business you would:\n\033[0m")
         results = self.__business.find({"state": state, "city": city, "categories": {"$in": [category]}}).limit(10)
@@ -85,7 +85,9 @@ class App:
         for document in results:
             print(str(count)+ '. {:30}{:30}{:30}'.format(str(document["name"]), str(document["stars"])+" Stars", str(document["review_count"])+" Reviews"))
             count +=1
-        print("Enter to return to the main menu.")
+        if(count == 1):
+            print("No results found")
+        print("\033[0;34mPress Enter to return to the Main Menu.\033[0;34m")
         input()
 
     #Use Case 2
@@ -145,7 +147,9 @@ class App:
             print(document['text'])
             print()
             count+=1
-        print("Press Enter to return to the main menu.")
+        if(count == 1):
+            print("No results found")
+        print("\033[0;34mPress Enter to return to the Main Menu.\033[0;34m")
         input()
 
     #Use Case 6
@@ -167,7 +171,7 @@ class App:
         for document in results:
             print((str(count)+ '. {:50}{:50}').format("Business Id: "+ str(document['business_id']), "Check Ins: "+ str(document['numberOfCheckIns'])))
             count +=1
-        print("Press enter to return to the main menu.")
+        print("\033[0;34mPress Enter to return to the Main Menu.\033[0;34m")
         input()
 
     #Use Case 8
@@ -199,7 +203,9 @@ class App:
                                                                    str(document["stars"]) + " Stars",
                                                                    str(document["review_count"]) + " Reviews"))
                 count += 1
-            print("Press Enter to the Return to the Main Menu")
+            if(count == 1):
+                print("No Search Results Found")
+            print("\033[0;34mPress Enter to return to the Main Menu.\033[0;34m")
             input()
         except (IOError, ValueError) as error:
             print("Invalid response. Press Enter to Return to the Main Menu and Try Again.")
@@ -217,7 +223,9 @@ class App:
                                                             "Compliment Count:" + str(document['compliment_count'])))
             print(document["text"])
             count +=1
-        print("Press Enter to return to the Main Menu")
+        if(count ==1):
+            print("No Tips Found.")
+        print("\033[0;34mPress Enter to return to the Main Menu.\033[0;34m")
         input()
 
     #Use Case 10
@@ -240,10 +248,10 @@ class App:
             print("Average Number of Friends of Elite Users: "+ str(round(document['avgFriendCount'])))
         else:
             print("There was an error while calculating the statistics")
-        print("Press Enter to return to the Main Menu.")
+        print("\033[0;34mPress Enter to return to the Main Menu.\033[0;34m")
         input()
 
-    #Use Case 12 todo
+    #Use Case 12
     def __viewFriendsList(self):
         userID = input("\033[0;34mEnter the id of the User that you would like to view their Friends List:\n\033[0m")
         document = self.__users.find_one({'user_id': userID})
@@ -255,8 +263,8 @@ class App:
                 print(str(count)+ ". " +friend.strip())
                 count +=1
         else:
-            print("User not found")
-        print("Press Enter to return to the Main Menu.")
+            print("User not found.")
+        print("\033[0;34mPress Enter to return to the Main Menu.\033[0;34m")
         input()
 
     #Use Case 13
@@ -268,8 +276,8 @@ class App:
             if document:
                 print("Number of elite users in " + str(year) +": " + str(document['eliteUsers']))
             else:
-                print("There was an error with the calculation")
-            print("Press Enter to return to the Main Menu.")
+                print("No Elite Users Found.")
+            print("\033[0;34mPress Enter to return to the Main Menu.\033[0;34m")
             input()
         except ValueError:
             print("\033[0;91mInvalid Year. Press Enter to return to menu and Try Again.\033[0m")
@@ -284,19 +292,21 @@ class App:
             print((str(count) + '. {:20}{:}').format(str(document["name"]),
                                                        str(document['fans']) + " Fans"))
             count +=1
-        print("Press Enter to return to the Main Menu.")
+        print("\033[0;34mPress Enter to return to the Main Menu.\033[0;34m")
         input()
     #Use Case 15
     def __getUserJoinedByYear(self):
         try:
             year = int(input("\033[0;34mEnter a year you would like to find the user who have joined then:\n\033[0m"))
             cursor = self.__users.find({ "yelping_since": {"$type": "date"},"$expr": {"$eq": [{"$year": "$yelping_since"}, year]}}).limit(10)
-            print("Users who have joined in "+ str(year) +":")
+            print("\033[0;34mUsers who have joined in "+ str(year) +":\033[0m")
             count = 1
             for document in cursor:
                 print((str(count)+'.'+ ' {:50}{:}').format(str(document['name']), " UserId:"+ str(document['user_id'])))
                 count+=1
-            print("\033[0;34mPress Enter to return to the menu.\033[0;34m")
+            if(count==1):
+                print("No Users Found")
+            print("\033[0;34mPress Enter to return to the Main Menu.\033[0;34m")
             input()
         except ValueError:
             print("\033[0;91mInvalid Year. Press Enter to return to menu and Try Again.\033[0m")

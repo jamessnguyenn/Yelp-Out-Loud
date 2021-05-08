@@ -127,8 +127,8 @@ class App:
 
     #Use Case 4
     def __closeBusiness(self):
-        zipcode = input("\033[0;34mEnter the zipcode of the business that is closing\n\033[0m")
-        businessID = input("\033[0;34mEnter the id of the business that is closing\n\033[0m")
+        zipcode = input("\033[0;34mEnter the zipcode of the business that is closing:\n\033[0m")
+        businessID = input("\033[0;34mEnter the id of the business that is closing:\n\033[0m")
         result = self.__business.update_one({"postal_code": zipcode, "business_id": businessID}, {"$set":{"is_open": 0}})
         if(result.modified_count>0):
             print("\033[0;34mSuccess. The business has been reported closed. Press Enter to return to the main menu.\033[0m")
@@ -143,7 +143,7 @@ class App:
         print("\033[0;34mTop 10 Reviews:\033[0m")
         count = 1
         for document in results:
-            print((str(count)+ '. {:45}{:20}{:10}'). format("Review ID: "+ str(document["review_id"]), "Stars: "+ str(document["stars"]), "Reacts: "+ str(document['reacts'])))
+            print(("\033[0;32m"+str(count)+ '. {:45}{:20}{:10}\033[0m'). format("Review ID: "+ str(document["review_id"]), "Stars: "+ str(document["stars"]), "Reacts: "+ str(document['reacts'])))
             print(document['text'])
             print()
             count+=1
@@ -160,7 +160,7 @@ class App:
         date = datetime.datetime.now()
         date = date.replace(microsecond=0)
         result = self.__tips.insert_one({"text": tip, "date": date, "compliment_count": 0, "user_id": userID, "business_id": businessID})
-        print("\033[0;34mThanks for helping the community. Your tip id is" + str(result.inserted_id) + ". Press Enter to return to the menu.\033[0m")
+        print("\033[0;34mThanks for helping the community. Press Enter to return to the menu.\033[0m")
         input()
 
     #Use Case 7
@@ -179,7 +179,7 @@ class App:
         try:
             reviewCount = int(input("\033[0;34mAt least how many reviews should this business have:\n\033[0m"))
             happyHourResponse = input("\033[0;34mDoes this business have happy hour? (Y/N)\n\033[0m")
-            dogsAllowedResponse = input("\033[0;34mDoes this business have dogs? (Y/N)\n\033[0m")
+            dogsAllowedResponse = input("\033[0;34mDoes this business allow dogs? (Y/N)\n\033[0m")
 
             happyHour = None
             dogsAllowed = None
@@ -214,7 +214,7 @@ class App:
 
     #Use Case 9
     def __top10Tips(self):
-        businessID = input("\033[0;34mEnter the business id of the business\n\033[0m")
+        businessID = input("\033[0;34mEnter the business id of the business:\n\033[0m")
         results = self.__tips.aggregate([{"$match":{"business_id": businessID}}, {"$sort":{"compliment_count":-1}}, {"$limit": 10}])
         print("\033[0;34mTop 10 Tips of the Business\033[0m")
         count = 1

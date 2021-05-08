@@ -11,9 +11,9 @@ class App:
         #Connect to each collection
         self.__business = self.__mongoConnector.db.business
         self.__checkin = self.__mongoConnector.db.checkin
-        self.__reviews = self.__mongoConnector.db.reviews
-        self.__tips = self.__mongoConnector.db.tips
-        self.__users = self.__mongoConnector.db.users
+        self.__reviews = self.__mongoConnector.db.review
+        self.__tips = self.__mongoConnector.db.tip
+        self.__users = self.__mongoConnector.db.user
 
         print('\u001B[34m----------------------------------------------------------')
         print('Welcome to Yelp Out Loud!\u001B[0m')
@@ -49,11 +49,11 @@ class App:
             elif (choice == '11'):
                 self.__getAverageElite()
             elif (choice == '12'):
-                self.__getAverageCompliment()
+               self.__viewFriendsList()
             elif (choice == '13'):
                 self.__getNumberOfEliteUsers()
             elif (choice == '14'):
-                print('You inputted 14!')
+                self.__viewEliteLeaderBoard()
             elif (choice == '15'):
                 self.__getUserJoinedByYear()
             elif(choice=='0'):
@@ -66,29 +66,29 @@ class App:
         print('{:50}{:}'.format('1 - Discover a business', '9 - View tips About a Business'))
         print('{:50}{:}'.format('2 - Review a business', '10 - Delete a review'))
         print('{:50}{:}'.format('3 - Check into a business', "11 - View average review count and friends of elite users"))
-        print('{:50}{:}'.format('4 - Close a business', '12 - View the average number of complements recieved by a user'))
+        print('{:50}{:}'.format('4 - Close a business', '12 - View the friends list of a specific user'))
         print('{:50}{:}'.format('5 - View Reviews of a business', '13 - View the number of elite users in a specific year'))
-        print('{:50}{:}'.format('6 - Send a Tip about a business', '14 - View the total number of reviews posted by a user'))
+        print('{:50}{:}'.format('6 - Send a Tip about a business', '14 - View the Elite User Leaderboard'))
         print('{:50}{:}'.format('7 - View the Business Leaderboards', '15 - View the list of 10 users who joined yelp in a certain year'))
         print('{:50}{:}'.format('8 - Discover a business based on other criterias', '0 - Exit'))
 
 
 
-    #Use Case 1 todo TEST
+    #Use Case 1
     def __discoverBusiness(self):
         state = input("Enter the state abbreviation that you would like to find the business in:\n")
-        city = input("Enter the city that you would like the find the businesss in:\n")
+        city = input("Enter the city that you would like the find the business in:\n")
         category = input("Enter the category of the business you would:\n")
-        results = self.__business.find({"state": state, "city": city, "category": {"$elemMatch": {"$match": category}}}).limit(10)
+        results = self.__business.find({"state": state, "city": city, "categories": {"$in": [category]}}).limit(10)
         print("Search Results:")
         count = 1
         for document in results:
-            print(str(count)+ '.'+ ' {:50}{:50}{:50}'.format(str(document["name"]), str(document["stars"]+" Stars"), str(document["review_count"]+" Reviews")))
-        count +=1
+            print(str(count)+ '. {:30}{:30}{:30}'.format(str(document["name"]), str(document["stars"])+" Stars", str(document["review_count"])+" Reviews"))
+            count +=1
         print("Enter to return to the main menu.")
         input()
 
-    #Use Case 2 todo TEST
+    #Use Case 2
     def __reviewBusiness(self):
         try:
             userID = input("Enter your user id:\n")
@@ -98,13 +98,13 @@ class App:
                 raise ValueError
             print("Input your review. Finish by entering an empty line.")
             buffer = input()
-            review = ""
+            review = buffer
             while buffer != "":
                 review = review+"\n"+ buffer
                 buffer = input()
             tempID = uuid.uuid4().hex
             reviewID = (str(tempID)[0:3] + '-' + str(tempID)[3:21])
-            self.__reviews.insertOne({"review_id": reviewID, "business_id": businessID, "user_id": userID, "stars": stars, "text": review})
+            self.__reviews.insert_one({"review_id": reviewID, "business_id": businessID, "user_id": userID, "stars": stars, "text": review})
             print("Thank you for sending in the review! Your review id is "+ reviewID+ ". Press enter to return to the main menu")
             input()
         except ValueError:
@@ -122,25 +122,28 @@ class App:
         else:
             print("No businesses found to check in. Press Enter to return to the menu and Try Again.")
 
-    #Use Case 4 todo TEST
+    #Use Case 4
     def __closeBusiness(self):
         zipcode = input("Enter the zipcode of the business that is closing\n")
         businessID = input("Enter the id of the business that is closing\n")
-        self.__business.update({"postal_code": zipcode, "business_id": businessID}, {"$set":{"is_open": 0}})
+        self.__business.update_one({"postal_code": zipcode, "business_id": businessID}, {"$set":{"is_open": 0}})
         print("Success. The business has been reported closed. Press Enter to return to the main menu.")
         input()
 
-    #Use Case 5 todo TEST
+    #Use Case 5
     def __getReviews(self):
         businessID = input("Enter the id of the business you would like to find reviews about:\n")
-        results = self.__business.aggregate([{"$match":{"business_id": businessID}}, {"$project":{"stars":1, "text":1, "review_id":1, "reacts":{"$add":["$useful", "$funny", "$cool"]}}}, {"$sort":{"reacts":-1}}, {"$limit": 10}])
+        results = self.__reviews.aggregate([{"$match":{"business_id": businessID}}, {"$project":{"stars":1, "text":1, "review_id":1, "reacts":{"$add":["$useful", "$funny", "$cool"]}}}, {"$sort":{"reacts":-1}}, {"$limit": 10}])
         print("Top 10 Reviews:")
         count = 1
         for document in results:
-            print((count+"."+ ' {:50}{:50}{:50}'). format("Review by: "+ str(document["user_id"]), "Stars:"+ str(document["stars"]), "Reacts:"+ str(document['reacts'])))
+            print((str(count)+ '. {:45}{:20}{:10}'). format("Review ID: "+ str(document["review_id"]), "Stars: "+ str(document["stars"]), "Reacts: "+ str(document['reacts'])))
             print(document['text'])
+            print()
+            count+=1
         print("Press Enter to return to the main menu.")
         input()
+
     #Use Case 6
     def __sendInTip(self):
         userID = input("\033[0;34mEnter your user id:\n\033[0m")
@@ -152,17 +155,18 @@ class App:
         print("\033[0;34mThanks for helping the community. Your tip id is" + str(result.inserted_id) + ". Press Enter to return to the menu.\033[0m")
         input()
 
-    #Use Case 7 todo TEST
+    #Use Case 7
     def __viewBusinessLeaderBoard(self):
-        results = self.__checkin.aggregate([{"project": { "business_id": 1, "numberOfCheckIns":{"$size": "$date"}}}, {"$sort":{"numberOfCheckIns": -1}}, {"$limit": 10}])
+        results = self.__checkin.aggregate([{"$project": { "business_id": 1, "numberOfCheckIns":{"$size": "$date"}}}, {"$sort":{"numberOfCheckIns": -1}}, {"$limit": 10}])
         print("Top 10 Businesses:")
         count = 1
         for document in results:
-            print((count+ '. {:50}{:50}{:50}').format("Business Id: "+ str(document['business_id']), "Check Ins: "+ str(document['numberOfCheckIns'])))
+            print((str(count)+ '. {:50}{:50}').format("Business Id: "+ str(document['business_id']), "Check Ins: "+ str(document['numberOfCheckIns'])))
             count +=1
         print("Press enter to return to the main menu.")
         input()
-    #Use Case 8 todo TEST
+
+    #Use Case 8
     def __otherSearchBusiness(self):
         try:
             reviewCount = int(input("At least how many reviews should this business have:\n"))
@@ -172,25 +176,25 @@ class App:
             happyHour = None
             dogsAllowed = None
             if(happyHourResponse == 'Y'):
-                happyHour = True
+                happyHour = "True"
             elif(happyHourResponse == 'N'):
-                happyHour = False
+                happyHour = "False"
             else:
                 raise IOError
             if(dogsAllowedResponse == 'Y'):
-                dogsAllowed = True
+                dogsAllowed = "True"
             elif(dogsAllowedResponse == 'N'):
-                dogsAllowed = False
+                dogsAllowed = "False"
             else:
                 raise IOError
             results = self.__business.find({"attributes.HappyHour": happyHour, "attributes.DogsAllowed": dogsAllowed, "review_count": {"$gte":reviewCount}}).limit(10)
             print("Search Results:")
             count = 1
             for document in results:
-                print(str(count) + '.' + ' {:50}{:50}{:50}'.format(str(document["name"]),
-                                                                   str(document["stars"] + " Stars"),
-                                                                   str(document["review_count"] + " Reviews")))
-            count += 1
+                print(str(count) + '.' + ' {:30}{:30}{:30}'.format(str(document["name"]),
+                                                                   str(document["stars"]) + " Stars",
+                                                                   str(document["review_count"]) + " Reviews"))
+                count += 1
             print("Enter to return to the main menu.")
             print("Press Enter to the Return to the Main Menu")
             input()
@@ -199,19 +203,20 @@ class App:
             input()
 
 
-    #Use Case 9 todo TEST
+    #Use Case 9
     def __top10Tips(self):
         businessID = input("Enter the business id of the business\n")
-        results = self.__tips.aggregate([{"$match":{"business_id": businessID}}, {"$sort":{"compliment_count":-1}}, {"$limit: 10"}])
+        results = self.__tips.aggregate([{"$match":{"business_id": businessID}}, {"$sort":{"compliment_count":-1}}, {"$limit": 10}])
         print("Top 10 Tips of the Business")
         count = 1
         for document in results:
-            print((count + "." + ' {:50}{:50}').format("Tip by: " + str(document["user_id"]),
+            print((str(count)  + '. {:50}{:50}').format("Tip by: " + str(document["user_id"]),
                                                             "Compliment Count:" + str(document['compliment_count'])))
             print(document["text"])
             count +=1
         print("Press Enter to return to the Main Menu")
         input()
+
     #Use Case 10
     def __deleteReview(self):
         businessID = input('\033[0;34mEnter the id of the business you would like to delete the review from:\n\033[0m')
@@ -223,42 +228,61 @@ class App:
             print("No Reviews found to delete. Press Enter to return to the menu and Try Again.")
         input()
 
-    #Use Case 11 todo TEST
+    #Use Case 11
     def __getAverageElite(self):
         result = self.__users.aggregate([{"$match": {"$expr": {"$gte":[{"$size": "$elite"}, 1]}}}, {"$group":{"_id": None, "avgReviewCount": {"$avg": "$review_count"}, "avgFriendCount":{"$avg":{"$size": "$friends"}}}}])
         document = next(result, None)
         if document:
-            print("Average Review Counts of Elite Users:" + str(document['avgReviewCount']) )
-            print("Average Number of Friends of Elite Users"+ str(document['avgFriendCount']))
+            print("Average Review Counts of Elite Users: " + str(round(document['avgReviewCount'])) )
+            print("Average Number of Friends of Elite Users: "+ str(round(document['avgFriendCount'])))
         else:
             print("There was an error while calculating the statistics")
         print("Press Enter to return to the Main Menu.")
         input()
 
     #Use Case 12 todo
-    def __getAverageCompliment(self):
-        print("Average Number of Complements Received Per User:")
-        print("Press Enter to return the Main Menu.")
+    def __viewFriendsList(self):
+        userID = input("Enter the id of the User that you would like to view their Friends List:\n")
+        document = self.__users.find_one({'user_id': userID})
+        if(document):
+            print("Friends List of " + str(document['name']))
+            friendsList = document['friends']
+            count = 1
+            for friend in friendsList:
+                print(str(count)+ ". " +friend.strip())
+                count +=1
+        else:
+            print("User not found")
+        print("Press Enter to return to the Main Menu.")
         input()
 
-    #Use Case 13 todo TEST
+    #Use Case 13
     def __getNumberOfEliteUsers(self):
         try:
             year = int(input("\033[0;34mEnter a year you would like to get the analytics from:\n\033[0m"))
-            result = self.__users.aggregate([{"$match":{"elite":{"$in": [year]}}}, {"$count": "eliteUsers"}])
+            result = self.__users.aggregate([{"$match":{"elite":{"$in": [str(year)]}}}, {"$count": "eliteUsers"}])
             document = next(result, None)
             if document:
-                print("Number of elite users in" + str(year) +":" + document['eliteUsers'])
+                print("Number of elite users in " + str(year) +": " + str(document['eliteUsers']))
             else:
                 print("There was an error with the calculation")
-            print("Press Enter to return to the main menu.")
+            print("Press Enter to return to the Main Menu.")
             input()
         except ValueError:
             print("\033[0;91mInvalid Year. Press Enter to return to menu and Try Again.\033[0m")
             input()
 
-    #Use Case 14 todo
-
+    #Use Case 14
+    def __viewEliteLeaderBoard(self):
+        results = self.__users.aggregate([{"$match":{"$expr":{"$gte":[{"$size": "$elite"}, 1]}}}, {"$sort":{"fans": -1}}, {"$limit": 10}])
+        count = 1
+        print("Elite User Leaderboard")
+        for document in results:
+            print((str(count) + '. {:20}{:}').format(str(document["name"]),
+                                                       str(document['fans']) + " Fans"))
+            count +=1
+        print("Press Enter to return to the Main Menu.")
+        input()
     #Use Case 15
     def __getUserJoinedByYear(self):
         try:

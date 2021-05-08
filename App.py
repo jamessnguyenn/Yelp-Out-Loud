@@ -76,11 +76,11 @@ class App:
 
     #Use Case 1
     def __discoverBusiness(self):
-        state = input("Enter the state abbreviation that you would like to find the business in:\n")
-        city = input("Enter the city that you would like the find the business in:\n")
-        category = input("Enter the category of the business you would:\n")
+        state = input("\033[0;34mEnter the state abbreviation that you would like to find the business in:\n033[0m")
+        city = input("\033[0;34mEnter the city that you would like the find the business in:\n\033[0m")
+        category = input("\033[0;34mEnter the category of the business you would:\n\033[0m")
         results = self.__business.find({"state": state, "city": city, "categories": {"$in": [category]}}).limit(10)
-        print("Search Results:")
+        print("\033[0;34mSearch Results:\033[0m")
         count = 1
         for document in results:
             print(str(count)+ '. {:30}{:30}{:30}'.format(str(document["name"]), str(document["stars"])+" Stars", str(document["review_count"])+" Reviews"))
@@ -91,9 +91,9 @@ class App:
     #Use Case 2
     def __reviewBusiness(self):
         try:
-            userID = input("Enter your user id:\n")
-            businessID = input("Enter the business id of the business you would like to review:\n")
-            stars = int(input("How many stars would you give this business?\n"))
+            userID = input("\033[0;34mEnter your user id:\n\033[0m")
+            businessID = input("\033[0;34mEnter the business id of the business you would like to review:\n\033[0m")
+            stars = int(input("\033[0;34mHow many stars would you give this business?\n\033[0m"))
             if(stars >5 or stars <0 ):
                 raise ValueError
             print("Input your review. Finish by entering an empty line.")
@@ -105,7 +105,7 @@ class App:
             tempID = uuid.uuid4().hex
             reviewID = (str(tempID)[0:3] + '-' + str(tempID)[3:21])
             self.__reviews.insert_one({"review_id": reviewID, "business_id": businessID, "user_id": userID, "stars": stars, "text": review})
-            print("Thank you for sending in the review! Your review id is "+ reviewID+ ". Press enter to return to the main menu")
+            print("\033[0;34mThank you for sending in the review! Your review id is "+ reviewID+ ". Press enter to return to the main menu\033[0m")
             input()
         except ValueError:
             print("Invalid star count. Press Enter to return to the menu and Try Again.")
@@ -120,21 +120,25 @@ class App:
         if(result.modified_count >0):
             print("\033[0;34mSuccessfully checked into the business! Press Enter to return to the menu.\033[0m")
         else:
-            print("No businesses found to check in. Press Enter to return to the menu and Try Again.")
+            print("No business found to check in. Press Enter to return to the menu and Try Again.")
+        input()
 
     #Use Case 4
     def __closeBusiness(self):
-        zipcode = input("Enter the zipcode of the business that is closing\n")
-        businessID = input("Enter the id of the business that is closing\n")
-        self.__business.update_one({"postal_code": zipcode, "business_id": businessID}, {"$set":{"is_open": 0}})
-        print("Success. The business has been reported closed. Press Enter to return to the main menu.")
+        zipcode = input("\033[0;34mEnter the zipcode of the business that is closing\n\033[0m")
+        businessID = input("\033[0;34mEnter the id of the business that is closing\n\033[0m")
+        result = self.__business.update_one({"postal_code": zipcode, "business_id": businessID}, {"$set":{"is_open": 0}})
+        if(result.modified_count>0):
+            print("\033[0;34mSuccess. The business has been reported closed. Press Enter to return to the main menu.\033[0m")
+        else:
+            print("No business found to close. Press Enter to return to the menu and Try Again.")
         input()
 
     #Use Case 5
     def __getReviews(self):
-        businessID = input("Enter the id of the business you would like to find reviews about:\n")
+        businessID = input("\033[0;34mEnter the id of the business you would like to find reviews about:\n\033[0m")
         results = self.__reviews.aggregate([{"$match":{"business_id": businessID}}, {"$project":{"stars":1, "text":1, "review_id":1, "reacts":{"$add":["$useful", "$funny", "$cool"]}}}, {"$sort":{"reacts":-1}}, {"$limit": 10}])
-        print("Top 10 Reviews:")
+        print("\033[0;34mTop 10 Reviews:\033[0m")
         count = 1
         for document in results:
             print((str(count)+ '. {:45}{:20}{:10}'). format("Review ID: "+ str(document["review_id"]), "Stars: "+ str(document["stars"]), "Reacts: "+ str(document['reacts'])))
@@ -158,7 +162,7 @@ class App:
     #Use Case 7
     def __viewBusinessLeaderBoard(self):
         results = self.__checkin.aggregate([{"$project": { "business_id": 1, "numberOfCheckIns":{"$size": "$date"}}}, {"$sort":{"numberOfCheckIns": -1}}, {"$limit": 10}])
-        print("Top 10 Businesses:")
+        print("\033[0;34mTop 10 Businesses:\033[0m")
         count = 1
         for document in results:
             print((str(count)+ '. {:50}{:50}').format("Business Id: "+ str(document['business_id']), "Check Ins: "+ str(document['numberOfCheckIns'])))
@@ -169,9 +173,9 @@ class App:
     #Use Case 8
     def __otherSearchBusiness(self):
         try:
-            reviewCount = int(input("At least how many reviews should this business have:\n"))
-            happyHourResponse = input("Does this business have happy hour? (Y/N)\n")
-            dogsAllowedResponse = input("Does this business have dogs? (Y/N)\n")
+            reviewCount = int(input("\033[0;34mAt least how many reviews should this business have:\n\033[0m"))
+            happyHourResponse = input("\033[0;34mDoes this business have happy hour? (Y/N)\n\033[0m")
+            dogsAllowedResponse = input("\033[0;34mDoes this business have dogs? (Y/N)\n\033[0m")
 
             happyHour = None
             dogsAllowed = None
@@ -188,14 +192,13 @@ class App:
             else:
                 raise IOError
             results = self.__business.find({"attributes.HappyHour": happyHour, "attributes.DogsAllowed": dogsAllowed, "review_count": {"$gte":reviewCount}}).limit(10)
-            print("Search Results:")
+            print("\033[0;34mSearch Results:\033[0m")
             count = 1
             for document in results:
                 print(str(count) + '.' + ' {:30}{:30}{:30}'.format(str(document["name"]),
                                                                    str(document["stars"]) + " Stars",
                                                                    str(document["review_count"]) + " Reviews"))
                 count += 1
-            print("Enter to return to the main menu.")
             print("Press Enter to the Return to the Main Menu")
             input()
         except (IOError, ValueError) as error:
@@ -205,9 +208,9 @@ class App:
 
     #Use Case 9
     def __top10Tips(self):
-        businessID = input("Enter the business id of the business\n")
+        businessID = input("\033[0;34mEnter the business id of the business\n\033[0m")
         results = self.__tips.aggregate([{"$match":{"business_id": businessID}}, {"$sort":{"compliment_count":-1}}, {"$limit": 10}])
-        print("Top 10 Tips of the Business")
+        print("\033[0;34mTop 10 Tips of the Business\033[0m")
         count = 1
         for document in results:
             print((str(count)  + '. {:50}{:50}').format("Tip by: " + str(document["user_id"]),
@@ -242,10 +245,10 @@ class App:
 
     #Use Case 12 todo
     def __viewFriendsList(self):
-        userID = input("Enter the id of the User that you would like to view their Friends List:\n")
+        userID = input("\033[0;34mEnter the id of the User that you would like to view their Friends List:\n\033[0m")
         document = self.__users.find_one({'user_id': userID})
         if(document):
-            print("Friends List of " + str(document['name']))
+            print("\033[0;34mFriends List of " + str(document['name'])+ "\033[0m")
             friendsList = document['friends']
             count = 1
             for friend in friendsList:
@@ -276,7 +279,7 @@ class App:
     def __viewEliteLeaderBoard(self):
         results = self.__users.aggregate([{"$match":{"$expr":{"$gte":[{"$size": "$elite"}, 1]}}}, {"$sort":{"fans": -1}}, {"$limit": 10}])
         count = 1
-        print("Elite User Leaderboard")
+        print("\033[0;34mElite User Leaderboard\033[0m")
         for document in results:
             print((str(count) + '. {:20}{:}').format(str(document["name"]),
                                                        str(document['fans']) + " Fans"))

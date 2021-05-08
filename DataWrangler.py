@@ -1,3 +1,6 @@
+# Yelp Out Loud - CS 157C, Section 1
+# Data Wrangler
+# Members: James Nguyen, Michael Huynh, Sriram Priyatham Siram
 userFile = open("yelp_academic_dataset_user.json", encoding = 'UTF-8')
 newUserFile = open("user.json", 'a',  encoding = 'UTF-8')
 counter = 450000

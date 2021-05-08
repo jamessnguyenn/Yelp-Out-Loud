@@ -1,3 +1,6 @@
+#Yelp Out Loud - CS 157C, Section 1
+#Main App
+#Members: James Nguyen, Michael Huynh, Sriram Priyatham Siram
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 import datetime
